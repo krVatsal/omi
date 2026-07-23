@@ -4,10 +4,15 @@ members = [
     "crates/omi-app",
     "crates/omi-capture",
     "crates/omi-audio",
-    "crates/omi-ble",
     "crates/omi-db",
     "crates/omi-transcription",
 ]
+
+# BLE wearable support is disabled by default due to hardware limitations
+# (requires BLE-capable adapter + Omi wearable device for testing).
+# To build with BLE: cargo build -p omi-app --features ble
+[workspace.metadata.optional-members]
+ble = ["crates/omi-ble"]
 
 [workspace.dependencies]
 tokio = { version = "1", features = ["full"] }
