@@ -35,9 +35,20 @@ crates/
   omi-app/            Dioxus desktop UI (main binary)
   omi-capture/        DXGI screen capture + Windows OCR
   omi-audio/          Mic + system audio via WASAPI/cpal
-  omi-ble/            BLE wearable support via btleplug
+  omi-ble/            BLE wearable support via btleplug (optional, see below)
   omi-db/             Local SQLite storage
   omi-transcription/  Deepgram WebSocket client
+```
+
+## BLE Wearable Support
+
+BLE support is **disabled by default** due to hardware limitations — it requires a BLE-capable
+adapter and an Omi wearable device for testing/development.
+
+To build with BLE enabled:
+
+```powershell
+cargo run -p omi-app --features ble
 ```
 
 ## License
