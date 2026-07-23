@@ -53,6 +53,10 @@ walkdir = "2"
 # Sibling crates
 omi-capture = { path = "../omi-capture" }
 omi-audio = { path = "../omi-audio" }
-# omi-ble = { path = "../omi-ble" }  # disabled — heavy btleplug deps
+omi-ble = { path = "../omi-ble", optional = true }
 omi-db = { path = "../omi-db" }
 omi-transcription = { path = "../omi-transcription" }
+
+[features]
+default = []
+ble = ["dep:omi-ble"]
