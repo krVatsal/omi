@@ -163,6 +163,27 @@ pub fn App() -> Element {
     use_context_provider(|| voice_history);
     use_context_provider(|| notification_history);
 
+    // ── Data retention (run once on mount) ──────────────────────────────────────
+    {
+        let db_ret = db.clone();
+        let cfg_ret = config.clone();
+        use_effect(move || {
+            let days = cfg_ret.read().data_retention_days;
+            if days > 0 {
+                if let Some(Db(ref d)) = *db_ret.read() {
+                    let s = d.prune_old_screenshots(days).unwrap_or(0);
+                    let cl = d.prune_old_clipboard(days).unwrap_or(0);
+                    let c = d.prune_old_conversations(days).unwrap_or(0);
+                    if s + cl + c > 0 {
+                        tracing::info!(
+                            "[RETENTION] Pruned {s} screenshots, {cl} clipboard, {c} conversations (>{days} days)"
+                        );
+                    }
+                }
+            }
+        });
+    }
+
     // ── Hotkey + tray listeners (use_hook = called once on mount) ───────────────
     {
         let mut fbar = floating_bar_visible.clone();
@@ -799,8 +820,14 @@ pub fn App() -> Element {
 /// Shared layout: sidebar on the left, page content on the right.
 #[component]
 fn AppLayout() -> Element {
+    let config: Signal<AppConfig> = use_context();
+    let theme_class = match config.read().theme.as_str() {
+        "light" => "app-layout theme-light",
+        "dark" => "app-layout theme-dark",
+        _ => "app-layout theme-system",
+    };
     rsx! {
-        div { class: "app-layout",
+        div { class: "{theme_class}",
             Sidebar {}
             main { class: "app-content",
                 Outlet::<Route> {}
