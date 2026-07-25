@@ -88,7 +88,7 @@ fn get_foreground_window_title() -> Option<String> {
 
         unsafe {
             let hwnd = GetForegroundWindow();
-            if hwnd.is_null() {
+            if hwnd == 0 {
                 return None;
             }
             let len = GetWindowTextLengthW(hwnd);
@@ -112,7 +112,7 @@ fn get_foreground_window_title() -> Option<String> {
 
 #[cfg(target_os = "windows")]
 extern "system" {
-    fn GetForegroundWindow() -> *mut std::ffi::c_void;
-    fn GetWindowTextW(hwnd: *mut std::ffi::c_void, lpstring: *mut u16, nmaxcount: i32) -> i32;
-    fn GetWindowTextLengthW(hwnd: *mut std::ffi::c_void) -> i32;
+    fn GetForegroundWindow() -> isize;
+    fn GetWindowTextW(hwnd: isize, lpstring: *mut u16, nmaxcount: i32) -> i32;
+    fn GetWindowTextLengthW(hwnd: isize) -> i32;
 }
