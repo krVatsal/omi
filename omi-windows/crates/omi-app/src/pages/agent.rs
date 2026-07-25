@@ -21,8 +21,7 @@ use crate::recording::LiveTranscript;
 enum MessageRole {
     User,
     Agent,
-    #[allow(dead_code)]
-    Tool { name: String, input: String },
+    Tool { name: String },
     SystemEvent(#[allow(dead_code)] String),
 }
 
@@ -43,9 +42,8 @@ impl ChatMessage {
     fn agent_streaming() -> Self {
         Self { id: uuid::Uuid::new_v4().to_string(), role: MessageRole::Agent, text: String::new(), tokens: None, is_streaming: true }
     }
-    #[allow(dead_code)]
     fn tool(name: String, input: String) -> Self {
-        Self { id: uuid::Uuid::new_v4().to_string(), role: MessageRole::Tool { name, input: input.clone() }, text: input, tokens: None, is_streaming: false }
+        Self { id: uuid::Uuid::new_v4().to_string(), role: MessageRole::Tool { name }, text: input, tokens: None, is_streaming: false }
     }
     fn system(text: String) -> Self {
         Self { id: uuid::Uuid::new_v4().to_string(), role: MessageRole::SystemEvent(text.clone()), text, tokens: None, is_streaming: false }
@@ -145,6 +143,12 @@ pub fn AgentPage() -> Element {
                         msgs.set(list);
                         hitl_state.set(Some(thread_id));
                         loading.set(false);
+                    }
+                    Ok(AgentEvent::ToolUse { name, input, .. }) => {
+                        let input_str = serde_json::to_string_pretty(&input).unwrap_or_default();
+                        let mut list = msgs.read().clone();
+                        list.push(ChatMessage::tool(name, input_str));
+                        msgs.set(list);
                     }
                     Ok(_) => {}
                     Err(_) => {
@@ -421,9 +425,11 @@ pub fn AgentPage() -> Element {
                     button {
                         class: "btn btn-secondary agent-stop-btn",
                         onclick: move |_| {
-                            // For native mode: there is no running query to cancel (LLM calls
-                            // are awaited to completion). Just mark as not loading.
+                            let rt = runtime.clone();
                             is_loading.clone().set(false);
+                            spawn(async move {
+                                rt.read().stop_query().await;
+                            });
                         },
                         "■ Stop"
                     }
