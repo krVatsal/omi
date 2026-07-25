@@ -205,4 +205,19 @@ impl Database {
         for r in rows { result.push(r?); }
         Ok(result)
     }
+
+    pub fn prune_old_conversations(&self, days: u32) -> Result<usize> {
+        let conn = self.conn();
+        conn.execute(
+            "DELETE FROM segments WHERE conversation_id IN (
+                SELECT id FROM conversations WHERE started_at < datetime('now', ?1)
+            )",
+            params![format!("-{days} days")],
+        )?;
+        let deleted = conn.execute(
+            "DELETE FROM conversations WHERE started_at < datetime('now', ?1)",
+            params![format!("-{days} days")],
+        )?;
+        Ok(deleted)
+    }
 }
