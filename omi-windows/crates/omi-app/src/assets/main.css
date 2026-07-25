@@ -2322,3 +2322,32 @@ body {
   flex-wrap: wrap;
 }
 
+/* ── Theme overrides ─────────────────────────────────────────────────── */
+.theme-light {
+  --bg-primary: #f5f5f7;
+  --bg-secondary: #ffffff;
+  --bg-tertiary: #e8e8ea;
+  --bg-hover: #dcdcde;
+  --text-primary: #1d1d1f;
+  --text-secondary: #6e6e73;
+  --text-muted: #999;
+  --border: #d2d2d7;
+  --accent: #6c5ce7;
+  --accent-hover: #5a4bd5;
+}
+.theme-system { /* Default: inherits dark from :root */ }
+@media (prefers-color-scheme: light) {
+  .theme-system {
+    --bg-primary: #f5f5f7;
+    --bg-secondary: #ffffff;
+    --bg-tertiary: #e8e8ea;
+    --bg-hover: #dcdcde;
+    --text-primary: #1d1d1f;
+    --text-secondary: #6e6e73;
+    --text-muted: #999;
+    --border: #d2d2d7;
+    --accent: #6c5ce7;
+    --accent-hover: #5a4bd5;
+  }
+}
+
