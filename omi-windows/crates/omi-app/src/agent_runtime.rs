@@ -45,7 +45,6 @@ pub enum AgentRequest {
     Warmup {
         sessions: Vec<WarmupSession>,
     },
-    #[allow(dead_code)]
     Stop,
 }
 
@@ -421,7 +420,6 @@ impl AgentRuntime {
         Ok(id)
     }
 
-    #[allow(dead_code)]
     pub async fn stop_query(&self) {
         let proc_guard = self.inner.process.lock().await;
         if let Some(ref proc) = *proc_guard {
