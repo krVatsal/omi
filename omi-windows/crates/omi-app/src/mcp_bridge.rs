@@ -186,6 +186,7 @@ pub fn is_google_query(query: &str) -> bool {
     keywords.iter().any(|kw| q.contains(kw))
 }
 
+#[allow(dead_code)]
 pub fn is_knowledge_intent(query: &str) -> bool {
     let q = query.to_lowercase();
     let keywords = [
@@ -270,6 +271,7 @@ pub async fn query_mcp(user_query: &str, cfg: &AppConfig) -> Option<McpResponse>
 }
 
 /// Kill the MCP backend subprocess on app shutdown.
+#[allow(dead_code)]
 pub async fn shutdown() {
     let mut guard = process_store().lock().await;
     if let Some(mut child) = guard.take() {
@@ -279,6 +281,7 @@ pub async fn shutdown() {
 }
 
 /// Check if MCP backend is reachable right now (non-blocking heuristic).
+#[allow(dead_code)]
 pub async fn is_running() -> bool {
     health_check().await.unwrap_or(false)
 }
