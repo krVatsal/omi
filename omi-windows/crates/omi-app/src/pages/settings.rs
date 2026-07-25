@@ -1,6 +1,7 @@
 use dioxus::prelude::*;
 
 use crate::agent_runtime::AgentRuntime;
+use crate::app::Db;
 use crate::auth::AuthStatus;
 use crate::config::AppConfig;
 use crate::sidecar::BackendStatus;
@@ -26,9 +27,14 @@ pub fn SettingsPage() -> Element {
     let mut config: Signal<AppConfig> = use_context();
     let mut auth_status: Signal<AuthStatus> = use_context();
     let runtime: Signal<AgentRuntime> = use_context();
+    let db: Signal<Option<Db>> = use_context();
     let input_devices = use_signal(|| {
         omi_audio::mic::list_input_devices().unwrap_or_default()
     });
+    let monitors = use_signal(|| {
+        omi_capture::dxgi::list_monitors().unwrap_or_default()
+    });
+    let export_status = use_signal(|| Option::<String>::None);
 
     let backend_display = match &*backend_status.read() {
         BackendStatus::Starting => "Starting...".to_string(),
@@ -88,6 +94,41 @@ pub fn SettingsPage() -> Element {
                             },
                             if is_pending { "Signing in..." } else { "Sign in with Google" }
                         }
+                    }
+                }
+            }
+
+            // General section
+            section { class: "settings-section",
+                h2 { "General" }
+                div { class: "settings-row",
+                    span { class: "settings-label", "Launch at Login" }
+                    label { class: "toggle",
+                        input {
+                            r#type: "checkbox",
+                            checked: config.read().auto_launch,
+                            onchange: move |e| {
+                                let enabled = e.checked();
+                                config.write().auto_launch = enabled;
+                                let _ = config.read().save();
+                                set_auto_launch(enabled);
+                            },
+                        }
+                        span { class: "toggle-slider" }
+                    }
+                }
+                div { class: "settings-row",
+                    label { class: "settings-label", "Theme" }
+                    select {
+                        class: "settings-input",
+                        value: "{config.read().theme}",
+                        onchange: move |e| {
+                            config.write().theme = e.value();
+                            let _ = config.read().save();
+                        },
+                        option { value: "system", "System" }
+                        option { value: "light", "Light" }
+                        option { value: "dark", "Dark" }
                     }
                 }
             }
@@ -411,6 +452,25 @@ pub fn SettingsPage() -> Element {
                             },
                         }
                         span { class: "toggle-slider" }
+                    }
+                }
+                div { class: "settings-row",
+                    label { class: "settings-label", "Monitor" }
+                    select {
+                        class: "settings-input",
+                        value: "{config.read().capture_monitor_mode}",
+                        onchange: move |e| {
+                            config.write().capture_monitor_mode = e.value();
+                            let _ = config.read().save();
+                        },
+                        option { value: "primary", "Primary Only" }
+                        option { value: "all", "All Monitors" }
+                        for (i, mon) in monitors.read().iter().enumerate() {
+                            option {
+                                value: "{i}",
+                                "{mon.name} ({mon.width}x{mon.height})"
+                            }
+                        }
                     }
                 }
                 div { class: "settings-row",
@@ -936,6 +996,59 @@ pub fn SettingsPage() -> Element {
                 }
             }
 
+            // ── Privacy & Storage section ─────────────────────────────────────
+            section { class: "settings-section",
+                h2 { "Privacy & Storage" }
+                div { class: "settings-row",
+                    label { class: "settings-label", "Auto-delete after (days)" }
+                    input {
+                        class: "settings-input settings-input-sm",
+                        r#type: "number",
+                        min: "0",
+                        max: "3650",
+                        placeholder: "0 = keep forever",
+                        value: "{config.read().data_retention_days}",
+                        onchange: move |e| {
+                            if let Ok(v) = e.value().parse::<u32>() {
+                                config.write().data_retention_days = v;
+                                let _ = config.read().save();
+                            }
+                        },
+                    }
+                }
+                div { class: "settings-row",
+                    span { class: "settings-label", "" }
+                    span { class: "settings-hint",
+                        "0 = keep forever. Data older than this is deleted on startup."
+                    }
+                }
+                div { class: "settings-row",
+                    span { class: "settings-label", "Export Data" }
+                    button {
+                        class: "btn btn-secondary",
+                        onclick: move |_| {
+                            let db_val = db.read().clone();
+                            let mut status = export_status.clone();
+                            spawn(async move {
+                                status.set(Some("Exporting...".into()));
+                                match export_all_data(&db_val) {
+                                    Ok(Some(path)) => status.set(Some(format!("Exported to {path}"))),
+                                    Ok(None) => status.set(Some("Export cancelled.".into())),
+                                    Err(e) => status.set(Some(format!("Export failed: {e}"))),
+                                }
+                            });
+                        },
+                        "Export All Data"
+                    }
+                }
+                if let Some(ref msg) = *export_status.read() {
+                    div { class: "settings-row",
+                        span { class: "settings-label", "" }
+                        span { class: "settings-hint", "{msg}" }
+                    }
+                }
+            }
+
             // ── Google MCP Tools section ───────────────────────────────────────
             section { class: "settings-section",
                 h2 { "🔗 Google MCP Tools" }
@@ -988,5 +1101,66 @@ pub fn SettingsPage() -> Element {
                 }
             }
         }
+    }
+}
+
+fn set_auto_launch(enabled: bool) {
+    use winreg::enums::HKEY_CURRENT_USER;
+    use winreg::RegKey;
+
+    let hkcu = RegKey::predef(HKEY_CURRENT_USER);
+    let run_key = r"SOFTWARE\Microsoft\Windows\CurrentVersion\Run";
+    match hkcu.open_subkey_with_flags(run_key, winreg::enums::KEY_SET_VALUE) {
+        Ok(key) => {
+            if enabled {
+                if let Ok(exe) = std::env::current_exe() {
+                    let _ = key.set_value("Omi", &exe.to_string_lossy().to_string());
+                }
+            } else {
+                let _ = key.delete_value("Omi");
+            }
+        }
+        Err(e) => tracing::error!("[SETTINGS] Failed to open Run registry key: {e}"),
+    }
+}
+
+fn export_all_data(db_opt: &Option<Db>) -> anyhow::Result<Option<String>> {
+    let db = match db_opt {
+        Some(Db(ref d)) => d,
+        None => return Err(anyhow::anyhow!("Database not available")),
+    };
+
+    let conversations = db.list_conversations(10000).unwrap_or_default();
+    let memories = db.list_memories(10000).unwrap_or_default();
+    let action_items = db.list_action_items(10000).unwrap_or_default();
+    let screenshots = db.list_screenshots(10000).unwrap_or_default();
+
+    let export = serde_json::json!({
+        "exported_at": chrono::Utc::now().to_rfc3339(),
+        "conversations": conversations,
+        "memories": memories,
+        "action_items": action_items,
+        "screenshots_metadata": screenshots.iter().map(|s| {
+            serde_json::json!({
+                "id": s.id,
+                "app_name": s.app_name,
+                "ocr_text": s.ocr_text,
+                "captured_at": s.captured_at.to_rfc3339(),
+            })
+        }).collect::<Vec<_>>(),
+    });
+
+    let path = rfd::FileDialog::new()
+        .set_file_name("omi-export.json")
+        .add_filter("JSON", &["json"])
+        .save_file();
+
+    match path {
+        Some(p) => {
+            let json = serde_json::to_string_pretty(&export)?;
+            std::fs::write(&p, json)?;
+            Ok(Some(p.to_string_lossy().to_string()))
+        }
+        None => Ok(None),
     }
 }
