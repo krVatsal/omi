@@ -50,6 +50,12 @@ tempfile = "3"
 clipboard-win = "5"
 walkdir = "2"
 
+# Auto-launch at login (Windows registry)
+winreg = "0.55"
+
+# Native file save dialog (export)
+rfd = "0.15"
+
 # Sibling crates
 omi-capture = { path = "../omi-capture" }
 omi-audio = { path = "../omi-audio" }
