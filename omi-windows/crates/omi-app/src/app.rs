@@ -320,7 +320,7 @@ pub fn App() -> Element {
         let mut rx = proactive_rx;
         let cfg_for_notif = config.clone();
         let db_notif = db.clone();
-        let mut nh_sig = notification_history.clone();
+        let nh_sig = notification_history.clone();
         spawn(async move {
             loop {
                 match rx.recv().await {
@@ -363,7 +363,7 @@ pub fn App() -> Element {
 
     // Load notification history from DB
     {
-        let mut nh = notification_history.clone();
+        let nh = notification_history.clone();
         let db_snap = db.clone();
         use_effect(move || {
             let db_val = db_snap.read().clone();
