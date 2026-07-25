@@ -56,6 +56,16 @@ impl Database {
             .join("\n"))
     }
 
+    /// Update the content of a memory.
+    pub fn update_memory(&self, id: &str, content: &str) -> Result<()> {
+        let conn = self.conn();
+        conn.execute(
+            "UPDATE memories SET content = ?1 WHERE id = ?2",
+            params![content, id],
+        )?;
+        Ok(())
+    }
+
     /// Delete a memory by id.
     pub fn delete_memory(&self, id: &str) -> Result<()> {
         let conn = self.conn();
