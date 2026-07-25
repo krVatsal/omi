@@ -313,7 +313,6 @@ pub fn FloatingBar() -> Element {
 
                             if is_detail_open {
                                 let sug_id_run = sug.id.clone();
-                                let sug_id_close = sug.id.clone();
                                 let sug_id_open = sug.id.clone();
                                 let sug_prompt_run = sug.agent_prompt.clone();
                                 let sug_prompt_open = sug.agent_prompt.clone();
