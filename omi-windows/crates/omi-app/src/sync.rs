@@ -39,6 +39,7 @@ pub async fn upload_memory(backend_url: String, token: String, content: String, 
     }
 }
 
+#[allow(dead_code)]
 pub async fn upload_conversation(
     backend_url: &str,
     token: &str,
@@ -76,6 +77,7 @@ pub async fn upload_conversation(
     Ok(())
 }
 
+#[allow(dead_code)]
 pub async fn upload_action_item(
     backend_url: &str,
     token: &str,
@@ -109,6 +111,7 @@ pub async fn upload_action_item(
     Ok(())
 }
 
+#[allow(dead_code)]
 pub async fn download_memories(
     backend_url: &str,
     token: &str,
@@ -136,6 +139,7 @@ pub async fn download_memories(
     Ok(memories)
 }
 
+#[allow(dead_code)]
 pub async fn download_conversations(
     backend_url: &str,
     token: &str,
@@ -164,6 +168,7 @@ pub async fn download_conversations(
 }
 
 /// Full bidirectional sync: upload local → download remote → merge
+#[allow(dead_code)]
 pub async fn full_sync(
     db: &omi_db::Database,
     cfg: &AppConfig,
@@ -237,6 +242,7 @@ pub async fn full_sync(
     Ok(result)
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Default)]
 pub struct SyncResult {
     pub uploaded_memories: usize,
@@ -245,6 +251,7 @@ pub struct SyncResult {
     pub downloaded_memories: usize,
 }
 
+#[allow(dead_code)]
 #[derive(Debug, serde::Deserialize)]
 pub struct RemoteMemory {
     #[serde(default)]
@@ -255,6 +262,7 @@ pub struct RemoteMemory {
     pub category: Option<String>,
 }
 
+#[allow(dead_code)]
 #[derive(Debug, serde::Deserialize)]
 pub struct RemoteConversation {
     #[serde(default)]
