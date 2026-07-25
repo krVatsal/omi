@@ -249,6 +249,22 @@ pub struct AppConfig {
     #[serde(default)]
     pub floating_bar_position: Option<(i32, i32)>,
 
+    // ── General ────────────────────────────────────────────────────────────────
+
+    /// Launch Omi automatically at Windows login.
+    #[serde(default)]
+    pub auto_launch: bool,
+
+    /// UI theme: "system" | "light" | "dark"
+    #[serde(default = "default_system")]
+    pub theme: String,
+
+    // ── Privacy & Storage ────────────────────────────────────────────────────
+
+    /// Auto-delete data older than N days. 0 = keep forever.
+    #[serde(default)]
+    pub data_retention_days: u32,
+
     // ── Webhook Integrations ──────────────────────────────────────────────────
     #[serde(default)]
     pub webhook_slack: String,
@@ -314,6 +330,10 @@ fn default_primary() -> String {
     "primary".to_string()
 }
 
+fn default_system() -> String {
+    "system".to_string()
+}
+
 impl Default for AppConfig {
     fn default() -> Self {
         Self {
@@ -373,6 +393,9 @@ impl Default for AppConfig {
             video_chunk_encoding_enabled: false,
             ffmpeg_path: String::new(),
             floating_bar_position: None,
+            auto_launch: false,
+            theme: default_system(),
+            data_retention_days: 0,
             webhook_slack: String::new(),
             webhook_github: String::new(),
             webhook_notion: String::new(),
