@@ -275,6 +275,7 @@ pub fn App() -> Element {
                         }
                         Ok(TrayAction::Quit) => {
                             tracing::info!("[TRAY] Quit requested from tray");
+                            crate::mcp_bridge::shutdown().await;
                             std::process::exit(0);
                         }
                         Ok(TrayAction::ToggleRecord) => {}
