@@ -8,17 +8,20 @@ use tracing::info;
 
 use crate::config::AppConfig;
 
+#[allow(dead_code)]
 #[derive(Debug, Clone)]
 pub struct AppUsageEntry {
     pub app_name: String,
     pub total_seconds: u64,
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Clone)]
 pub struct AppTracker {
     inner: Arc<RwLock<HashMap<String, u64>>>,
 }
 
+#[allow(dead_code)]
 impl AppTracker {
     pub fn new() -> Self {
         Self {
@@ -49,6 +52,7 @@ impl AppTracker {
     }
 }
 
+#[allow(dead_code)]
 pub async fn run_app_tracker(
     tracker: AppTracker,
     cfg_provider: impl Fn() -> AppConfig + Send + 'static,
