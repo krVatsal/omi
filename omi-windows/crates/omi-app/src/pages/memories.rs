@@ -40,6 +40,8 @@ pub fn MemoriesPage() -> Element {
     let mut search = use_signal(String::new);
     let mut active_cat = use_signal(|| "all".to_string());
     let is_deduping = use_signal(|| false);
+    let mut editing_id: Signal<Option<String>> = use_signal(|| None);
+    let mut edit_content = use_signal(String::new);
 
     // Load on mount
     let db_load = db.clone();
@@ -174,11 +176,16 @@ pub fn MemoriesPage() -> Element {
                     for mem in filtered.clone() {
                         {
                             let mem_id = mem.id.clone();
+                            let mem_id_edit = mem.id.clone();
+                            let mem_id_save = mem.id.clone();
+                            let mem_content = mem.content.clone();
                             let cat_slug = mem.category.clone().unwrap_or_else(|| "other".to_string());
                             let cat_class = category_color(&cat_slug);
                             let time_str = mem.created_at.format("%b %d · %H:%M").to_string();
                             let db2 = db.clone();
+                            let db_save = db.clone();
                             let mut mems_sig = memories.clone();
+                            let is_editing = editing_id.read().as_deref() == Some(&mem.id);
 
                             rsx! {
                                 div { class: "memory-card", key: "{mem_id}",
@@ -188,21 +195,63 @@ pub fn MemoriesPage() -> Element {
                                             span { class: "memory-category-badge {cat_class}", "{cat_slug}" }
                                             span { class: "memory-date text-muted", "{time_str}" }
                                         }
-                                        p { class: "memory-content", "{mem.content}" }
-                                    }
-                                    button {
-                                        class: "mem-delete-btn",
-                                        title: "Delete",
-                                        onclick: move |_| {
-                                            if let Some(Db(ref d)) = *db2.read() {
-                                                if d.delete_memory(&mem_id).is_ok() {
-                                                    if let Ok(m) = d.list_memories(500) {
-                                                        mems_sig.set(m);
+                                        if is_editing {
+                                            textarea {
+                                                class: "memory-edit-textarea",
+                                                value: "{edit_content}",
+                                                oninput: move |e| edit_content.set(e.value()),
+                                                onkeydown: move |e| {
+                                                    if e.key() == Key::Escape {
+                                                        editing_id.set(None);
                                                     }
+                                                },
+                                            }
+                                            div { class: "memory-edit-actions",
+                                                button {
+                                                    class: "btn btn-primary btn-sm",
+                                                    onclick: move |_| {
+                                                        if let Some(Db(ref d)) = *db_save.read() {
+                                                            let _ = d.update_memory(&mem_id_save, &edit_content.read());
+                                                        }
+                                                        editing_id.set(None);
+                                                        reload();
+                                                    },
+                                                    "Save"
+                                                }
+                                                button {
+                                                    class: "btn btn-secondary btn-sm",
+                                                    onclick: move |_| editing_id.set(None),
+                                                    "Cancel"
                                                 }
                                             }
-                                        },
-                                        "✕"
+                                        } else {
+                                            p { class: "memory-content", "{mem.content}" }
+                                        }
+                                    }
+                                    div { class: "memory-card-actions",
+                                        button {
+                                            class: "btn-icon",
+                                            title: "Edit",
+                                            onclick: move |_| {
+                                                edit_content.set(mem_content.clone());
+                                                editing_id.set(Some(mem_id_edit.clone()));
+                                            },
+                                            "✎"
+                                        }
+                                        button {
+                                            class: "btn-icon btn-danger",
+                                            title: "Delete",
+                                            onclick: move |_| {
+                                                if let Some(Db(ref d)) = *db2.read() {
+                                                    if d.delete_memory(&mem_id).is_ok() {
+                                                        if let Ok(m) = d.list_memories(500) {
+                                                            mems_sig.set(m);
+                                                        }
+                                                    }
+                                                }
+                                            },
+                                            "✕"
+                                        }
                                     }
                                 }
                             }
