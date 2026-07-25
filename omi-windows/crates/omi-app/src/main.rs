@@ -23,7 +23,6 @@ mod pages;
 mod proactive;
 mod recording;
 mod sidecar;
-#[allow(dead_code)]
 mod sync;
 mod tts_engine;
 mod tray;
