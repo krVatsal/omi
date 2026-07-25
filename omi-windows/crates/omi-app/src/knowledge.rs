@@ -196,6 +196,7 @@ pub async fn get_document_chunks(resource_id: &str, cfg: &AppConfig) -> Result<V
     }
 }
 
+#[allow(dead_code)]
 pub fn is_knowledge_query(query: &str) -> bool {
     let q = query.to_lowercase();
     let keywords = [
