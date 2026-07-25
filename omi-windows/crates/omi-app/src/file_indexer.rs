@@ -1,4 +1,4 @@
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::time::Duration;
 
 use chrono::Utc;
@@ -171,6 +171,7 @@ fn resolve_index_dirs(cfg: &AppConfig) -> Vec<PathBuf> {
     dirs
 }
 
+#[allow(dead_code)]
 pub fn format_recent_files(db: &omi_db::Database, limit: usize) -> String {
     match db.list_recent_files(limit) {
         Ok(files) => files
@@ -189,6 +190,7 @@ pub fn format_recent_files(db: &omi_db::Database, limit: usize) -> String {
     }
 }
 
+#[allow(dead_code)]
 fn format_size(bytes: i64) -> String {
     if bytes < 1024 {
         format!("{bytes}B")
