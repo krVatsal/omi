@@ -6,6 +6,7 @@ pub struct NotificationEntry {
     pub title: String,
     pub body: String,
     pub timestamp: DateTime<Local>,
+    #[allow(dead_code)]
     pub priority: u8,
 }
 
