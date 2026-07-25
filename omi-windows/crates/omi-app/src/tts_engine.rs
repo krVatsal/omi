@@ -120,6 +120,7 @@ pub fn is_available(_cfg: &AppConfig) -> bool {
 
 /// Speak text in a fire-and-forget tokio task.
 /// Errors are logged, not propagated. Use this for non-critical narration.
+#[allow(dead_code)]
 pub fn speak_detached(text: String, cfg: AppConfig) {
     tokio::spawn(async move {
         match speak_text(&text, &cfg).await {
