@@ -25,6 +25,7 @@ pub struct TavilyResult {
     pub title: String,
     pub url: String,
     pub content: String,
+    #[allow(dead_code)]
     pub score: f64,
 }
 
