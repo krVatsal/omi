@@ -79,6 +79,29 @@ impl Database {
     }
 
     /// Delete screenshots older than `days` days to manage disk usage.
+    pub fn list_screenshots_in_range(&self, from: &str, to: &str, limit: usize) -> Result<Vec<Screenshot>> {
+        let conn = self.conn();
+        let mut stmt = conn.prepare(
+            "SELECT id, captured_at, app_name, window_title, ocr_text, thumbnail_path
+             FROM screenshots
+             WHERE captured_at >= ?1 AND captured_at < ?2
+             ORDER BY captured_at DESC LIMIT ?3",
+        )?;
+        let rows = stmt.query_map(params![from, to, limit as i64], |row| {
+            Ok(Screenshot {
+                id: row.get(0)?,
+                captured_at: row.get::<_, String>(1)?.parse().unwrap_or_else(|_| Utc::now()),
+                app_name: row.get(2)?,
+                window_title: row.get(3)?,
+                ocr_text: row.get(4)?,
+                thumbnail_path: row.get(5)?,
+            })
+        })?;
+        let mut screenshots = Vec::new();
+        for r in rows { screenshots.push(r?); }
+        Ok(screenshots)
+    }
+
     pub fn prune_old_screenshots(&self, days: u32) -> Result<usize> {
         let conn = self.conn();
         let deleted = conn.execute(
