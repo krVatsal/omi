@@ -12,19 +12,21 @@ use winrt_notification::{Duration, Sound, Toast};
 
 const APP_ID: &str = "Omi AI Companion";
 
-/// Send a simple toast notification with title + body.
+#[allow(dead_code)]
 pub fn send(title: &str, body: &str) {
     send_impl(title, body);
 }
 
 /// Send a toast with a specific title + multiline body.
 /// The notification stays on screen for a longer duration.
+#[allow(dead_code)]
 pub fn send_with_action(title: &str, body: &str, _action_label: &str) {
     // winrt-notification doesn't support click actions in 0.5, so we just show the body.
     // Future: upgrade to windows-rs for full interactive toasts.
     send_impl(title, body);
 }
 
+#[allow(dead_code)]
 fn send_impl(title: &str, body: &str) {
     let title = title.to_string();
     let body = body.to_string();
