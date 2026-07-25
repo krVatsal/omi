@@ -149,6 +149,8 @@ pub fn RewindPage() -> Element {
     let mut scrubber_idx = use_signal(|| 0);
     let mut app_filter = use_signal(String::new);
     let mut available_apps = use_signal(Vec::<String>::new);
+    let mut date_from = use_signal(String::new);
+    let mut date_to = use_signal(String::new);
 
     let capture_enabled = config.read().screen_capture_enabled;
 
@@ -159,7 +161,16 @@ pub fn RewindPage() -> Element {
         spawn(async move {
             loop {
                 if let Some(Db(ref d)) = db_snap {
-                    match d.list_screenshots(200) {
+                    let from = date_from.read().clone();
+                    let to = date_to.read().clone();
+                    let result = if !from.is_empty() || !to.is_empty() {
+                        let f = if from.is_empty() { "2000-01-01".to_string() } else { from };
+                        let t = if to.is_empty() { "2099-12-31".to_string() } else { format!("{to}T23:59:59") };
+                        d.list_screenshots_in_range(&f, &t, 200)
+                    } else {
+                        d.list_screenshots(200)
+                    };
+                    match result {
                         Ok(shots) => {
                             let mut apps: Vec<String> = shots
                                 .iter()
@@ -296,6 +307,20 @@ pub fn RewindPage() -> Element {
                         for a in available_apps.read().iter() {
                             option { value: "{a}", "{a}" }
                         }
+                    }
+                    input {
+                        class: "settings-input settings-input-sm",
+                        r#type: "date",
+                        value: "{date_from}",
+                        title: "From date",
+                        onchange: move |e| date_from.set(e.value()),
+                    }
+                    input {
+                        class: "settings-input settings-input-sm",
+                        r#type: "date",
+                        value: "{date_to}",
+                        title: "To date",
+                        onchange: move |e| date_to.set(e.value()),
                     }
                     button {
                         class: "btn btn-secondary",
