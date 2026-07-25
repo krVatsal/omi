@@ -139,6 +139,57 @@ impl Database {
         Ok(())
     }
 
+    /// Delete a conversation and all its segments.
+    pub fn delete_conversation(&self, id: &str) -> Result<()> {
+        let conn = self.conn();
+        conn.execute("DELETE FROM segments WHERE conversation_id = ?1", params![id])?;
+        conn.execute("DELETE FROM conversations WHERE id = ?1", params![id])?;
+        Ok(())
+    }
+
+    /// Update only the title of a conversation.
+    pub fn update_conversation_title(&self, id: &str, title: &str) -> Result<()> {
+        let conn = self.conn();
+        conn.execute(
+            "UPDATE conversations SET title = ?1 WHERE id = ?2",
+            params![title, id],
+        )?;
+        Ok(())
+    }
+
+    /// Search conversations by title or summary.
+    pub fn search_conversations(&self, query: &str, limit: usize) -> Result<Vec<Conversation>> {
+        let conn = self.conn();
+        let pattern = format!("%{query}%");
+        let mut stmt = conn.prepare(
+            "SELECT id, title, started_at, ended_at, duration_secs, status, summary
+             FROM conversations
+             WHERE title LIKE ?1 OR summary LIKE ?1
+             ORDER BY started_at DESC LIMIT ?2",
+        )?;
+
+        let rows = stmt.query_map(params![pattern, limit as i64], |row| {
+            Ok(Conversation {
+                id: row.get(0)?,
+                title: row.get(1)?,
+                started_at: row.get::<_, String>(2)?
+                    .parse()
+                    .unwrap_or_else(|_| Utc::now()),
+                ended_at: row.get::<_, Option<String>>(3)?
+                    .and_then(|s| s.parse().ok()),
+                duration_secs: row.get(4)?,
+                status: row.get(5)?,
+                summary: row.get(6)?,
+            })
+        })?;
+
+        let mut conversations = Vec::new();
+        for row in rows {
+            conversations.push(row?);
+        }
+        Ok(conversations)
+    }
+
     /// Get recent conversations (id, title, summary, ended_at) for chat context injection.
     pub fn get_recent_context(&self, limit: usize) -> Result<Vec<(String, String, String)>> {
         let conn = self.conn();
