@@ -21,8 +21,9 @@ use crate::recording::LiveTranscript;
 enum MessageRole {
     User,
     Agent,
+    #[allow(dead_code)]
     Tool { name: String, input: String },
-    SystemEvent(String),
+    SystemEvent(#[allow(dead_code)] String),
 }
 
 #[derive(Debug, Clone)]
@@ -42,6 +43,7 @@ impl ChatMessage {
     fn agent_streaming() -> Self {
         Self { id: uuid::Uuid::new_v4().to_string(), role: MessageRole::Agent, text: String::new(), tokens: None, is_streaming: true }
     }
+    #[allow(dead_code)]
     fn tool(name: String, input: String) -> Self {
         Self { id: uuid::Uuid::new_v4().to_string(), role: MessageRole::Tool { name, input: input.clone() }, text: input, tokens: None, is_streaming: false }
     }
@@ -63,7 +65,7 @@ pub fn AgentPage() -> Element {
     let mut history: Signal<Vec<(String, String)>> = use_signal(Vec::new);
     let mut input_text = use_signal(String::new);
     let is_loading = use_signal(|| false);
-    let mut pending_hitl: Signal<Option<String>> = use_signal(|| None);
+    let pending_hitl: Signal<Option<String>> = use_signal(|| None);
 
     // Pre-fill from a tapped suggestion (if one exists in context)
     let mut suggestion_prompt: Signal<Option<String>> = use_context();
